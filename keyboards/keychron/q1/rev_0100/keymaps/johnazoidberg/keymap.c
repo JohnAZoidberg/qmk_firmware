@@ -30,6 +30,40 @@ enum layers{
 #define KC_TASK LGUI(KC_TAB)
 #define KC_FLXP LGUI(KC_E)
 
+// Keys that I don't use
+// - Capslock      => Map as ctrl and escape
+// - Left control  =>
+// - Escape        =>
+// - Insert        => End
+// - Right alt     =>
+// - Right Control => Screenshot
+//
+// Keys missing on Q1
+// - End
+// - Sleep
+// - Print (screenshot)
+// - SysRQ (KC_SYSREQ)
+
+// Features:
+// - Tab: Control when held and combined, Escape when tapped
+// - vim mode (maybe additional layer activated by alt)
+//   - hjkl   -> arrows
+//   - 0      -> pos1
+//   - $      -> end
+
+// TODO:
+// - vim mode (maybe additional layer activated by alt)
+//   - ctrl+u -> page up
+//   - ctrl+d -> page down
+// - Add button to switch and layers for English, PinYin, ZhuYin, Thai
+
+// German
+//keymap_extras/keymap_german.h
+//#define DE_UDIA KC_LBRC // Ü
+//#define DE_ODIA KC_SCLN // Ö
+//#define DE_ADIA KC_QUOT // Ä
+// Maybe use a leader key to emulate mac keyboard behavior: https://docs.qmk.fm/#/feature_leader_key
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 [LINUX_BASE] = LAYOUT_ansi_82(
