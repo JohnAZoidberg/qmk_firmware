@@ -536,6 +536,93 @@ const aw_led PROGMEM g_aw_leds[RGB_MATRIX_LED_COUNT] = {
 
 ---
 
+### AW20198 :id=aw20198
+
+There is basic support for addressable RGB matrix lighting with the AW20198 I2C RGB controller . To enable it, add this to your `rules.mk`:
+
+```makefile
+RGB_MATRIX_ENABLE = yes
+RGB_MATRIX_DRIVER = aw20198
+```
+
+You can use between 1 and 4 IC's. Do not specify `DRIVER_ADDR_<N>` define for IC's if not present on your keyboard. The `DRIVER_ADDR_1` default assumes that all Address pins on the controller have been connected to GND. Drivers that have SYNC functionality have the default settings to disable if 1 driver. If more than 1 drivers then `DRIVER_ADDR_1` will be set to Master and the remaining ones set to Slave.
+
+Configure the hardware via your `config.h`:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AW20_TIMEOUT` | (Optional) How long to wait for i2c messages, in milliseconds | 100 |
+| `AW20_PERSISTENCE` | (Optional) Retry failed messages this many times | 0 |
+| `DRIVER_COUNT` | (Required) How many RGB driver IC's are present | |
+| `RGB_MATRIX_LED_COUNT` | (Required) How many RGB lights are present across all drivers | |
+| `DRIVER_ADDR_1` | (Optional) Address for the first RGB driver | |
+| `DRIVER_ADDR_<N>` | (Required) Address for the additional RGB drivers | |
+| `AW20_SSR_<N>` | (Optional) Configuration for the Spread Spectrum Register | |
+| `AW20_CONFIGURATION` | (Optional) Configuration for the Configuration Register | 0x01 |
+| `AW20_GLOBALCURRENT` | (Optional) Configuration for the Global Current Register | 0xFF |
+| `AW20_PULLDOWNUP` | (Optional) Configuration for the Pull Up & Pull Down Register | 0x33 |
+| `AW20_TEMP` | (Optional) Configuration for the Temperature Register | 0x00 |
+| `AW20_PWM_ENABLE` | (Optional) Configuration for the PWM Enable Register | TODO |
+| `AW20_PWM_SET` | (Optional) Configuration for the PWM Setting Register | TODO |
+| `AW20_SCAL_RED` | (Optional) Configuration for the RED LEDs in Scaling Registers | 0xFF |
+| `AW20_SCAL_BLUE` | (Optional) Configuration for the BLUE LEDs in Scaling Registers | 0xFF |
+| `AW20_SCAL_GREEN` | (Optional) Configuration for the GREEN LEDs in Scaling Registers | 0xFF |
+| `AW20_MANUAL_SCALING` | (Optional) If you wish to configure the Scaling Registers manually | |
+
+Here is an example using 2 drivers.
+
+```c
+#define DRIVER_ADDR_2 0b0100001
+
+#define DRIVER_COUNT 2
+#define DRIVER_1_LED_TOTAL 66
+#define DRIVER_2_LED_TOTAL 42
+#define RGB_MATRIX_LED_COUNT (DRIVER_1_LED_TOTAL + DRIVER_2_LED_TOTAL)
+```
+
+!> Note the parentheses, this is so when `RGB_MATRIX_LED_COUNT` is used in code and expanded, the values are added together before any additional math is applied to them. As an example, `rand() % (DRIVER_1_LED_TOTAL + DRIVER_2_LED_TOTAL)` will give very different results than `rand() % DRIVER_1_LED_TOTAL + DRIVER_2_LED_TOTAL`.
+
+Currently only 4 drivers are supported, but it would be trivial to support for more. Note that using a combination of different drivers is not supported. All drivers must be of the same model.
+
+Define these arrays listing all the LEDs in your `<keyboard>.c`:
+
+```c
+const aw20_led PROGMEM g_aw20_leds[RGB_MATRIX_LED_COUNT] = {
+/* Refer to AW20 manual for these locations
+ *   driver
+ *   |  R location
+ *   |  |        G location
+ *   |  |        |        B location
+ *   |  |        |        | */
+    {0, CS1_SW1, CS2_SW1, CS3_SW1},
+    ....
+}
+```
+
+Where `CSx_SWx` is the location of the LED in the matrix defined by the datasheet. The `driver` is the index of the driver you defined in your `config.h` (`0`, `1`, `2`, or `3` for now).
+
+`AW20_MANUAL_SCALING` is used to override the Scaling for individual LED's. By default they will be set as per `AW20_SCAL_<colour>`. In `config.h` set how many LED's you want to manually set scaling for.
+Eg `#define AW20_MANUAL_SCALING 3`
+
+Then Define the array listing all the LEDs you want to override in your `<keyboard>.c`:
+
+```c
+const aw20_led PROGMEM g_aw20_scaling[AW20_MANUAL_SCALING] = {
+ *   LED Index
+ *   |  R scaling
+ *   |  |    G scaling
+ *   |  |    |    B scaling
+ *   |  |    |    | */
+    {5, 120, 155, 167},
+    {9, 120, 155, 167},
+    ....
+}
+```
+
+Where LED Index is the position of the LED in the `g_aw20_leds` array. The `scaling` value between 0 and 255 to be written to the Scaling Register.
+
+---
+
 ## Common Configuration :id=common-configuration
 
 From this point forward the configuration is the same for all the drivers. The `led_config_t` struct provides a key electrical matrix to led index lookup table, what the physical position of each LED is on the board, and what type of key or usage the LED if the LED represents. Here is a brief example:
